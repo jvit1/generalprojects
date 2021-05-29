@@ -3,22 +3,13 @@ library(tidyverse)
 library(tidymodels)
 library(modelr)
 library(randomForest)
-train <- read.csv("C:/Users/student/Desktop/titanic/train.csv")
+train <- read.csv("C:/Users/student/Documents/UVA/Portfolio Projects/generalprojects/Titanic/train.csv")
+test <- read.csv("C:/Users/student/Documents/UVA/Portfolio Projects/generalprojects/Titanic/test.csv")
 ```
 
 ```{r}
-## Modify data:
-## 1. Create response variable: 
-##      Has the bike retained at least 80%, between 50% and 80%, or below 50% of the showroom price?
-## 2. Remove name variable and variables used to create response variable
-## 3. Remove all makes that have fewer than 3 observations
-## 4. Remove all rows with any NAs
 train <- train %>% select(-Name) %>% drop_na()
 
-
-## Build random forest
-## Without basic_model for computing power
-## Two variables are eligible for a split at each node
 RF.mod1 <- randomForest(Survived ~ ., data = train,
                         mtry = 2, importance = TRUE)
 
@@ -58,34 +49,54 @@ RF.mod2 %>%
 ##   present in other sets. In this case, prediction will not work.
 RF.add1 <- train %>%
   add_predictions(RF.mod1) %>%
-  rename(pred_value = pred) %>%
-  mutate(method = "RF.mod1")
+  rename(pred_pct = pred) %>%
+  mutate(method = "RF.mod1") %>%
+  mutate(prediction = ifelse(pred_pct > .5, 1,0))
 
 RF.add2 <- train %>%
   add_predictions(RF.mod2) %>%
-  rename(pred_value = pred) %>%
-  mutate(method = "RF.mod2")
+  rename(pred_pct = pred) %>%
+  mutate(method = "RF.mod2") %>%
+  mutate(prediction = ifelse(pred_pct > .5, 1,0))
 
 
-## Combine prediction information
+## Combine prediction informatio
+
+RF.add1$Survived <- as.factor(RF.add1$Survived)
+RF.add1$prediction <- as.factor(RF.add1$prediction)
+RF.add2$Survived <- as.factor(RF.add2$Survived)
+RF.add2$prediction <- as.factor(RF.add2$prediction)
+
 RF.add <- RF.add1 %>%
   bind_rows(RF.add2) %>%
   group_by(method)
-
-
 ## Confusion matrix
 ## Use validation data
 RF.add1 %>%
-  conf_mat(truth = value, estimate = pred_value)
+  conf_mat(truth = Survived, estimate = prediction)
 
 RF.add2 %>%
-  conf_mat(truth = value, estimate = pred_value)
+  conf_mat(truth = Survived, estimate = prediction)
 
 
 ## Accuracy rate
 ## Use validation data
 RF.add %>%
-  metrics(truth = Survived, estimate = pred_value) %>%
+  metrics(truth = Survived, estimate = prediction) %>%
   filter(.metric == "accuracy")
+```
+
+Adding to testing data
+```{r}
+RF.test <- test %>%
+  add_predictions(RF.mod1) %>%
+  rename(pred_pct = pred) %>%
+  mutate(method = "RF.mod1") %>%
+  mutate(prediction = ifelse(pred_pct > .5, 1,0))
+
+final.results <- RF.test %>%
+  select(PassengerId, prediction)
+
+write.csv(final.results, 'C:/Users/student/Documents/UVA/Portfolio Projects/generalprojects/Titanic/results.csv' , row.names=FALSE)
 ```
 
