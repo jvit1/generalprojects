@@ -1,18 +1,57 @@
-```{r}
+```{r warning=FALSE, include=FALSE}
 library(tidyverse)
 library(tidymodels)
 library(modelr)
 library(randomForest)
+library(ggplot2)
+library(knitr)
 train <- read.csv("C:/Users/student/Documents/UVA/Portfolio Projects/generalprojects/Titanic/train.csv")
 test <- read.csv("C:/Users/student/Documents/UVA/Portfolio Projects/generalprojects/Titanic/test.csv")
 ```
 
-Exploratory
-Let's see how many NA values are in each column.
+## Exploratory
+Let's take a look into the data.
+```{r}
+str(train)
+```
+As we can see, our response variable (survived) isn't currently a factor. This will cause some issues later down the road, so let's address it now as well as making some other general changes. Of course, I'm changing these just based on 'gut' feeling, so I might have to change them back later on.
+```{r}
+train$Sex <- as.factor(train$Sex)
+train$Survived <- as.factor(train$Survived)
+train$Pclass <- as.factor(train$Pclass)
+train$Embarked <- as.factor(train$Embarked)
+train$SibSp <- as.factor(train$SibSp)
+train$Parch <- as.factor(train$Parch)
+
+
+train$Embarked[train$Embarked==""]<-"Any text, NA will be generated"
+train$Cabin[train$Cabin==""]<-NA
+```
+
+Let's look to see if there's any missing values.
 ```{r}
 colSums(is.na(train))
-colSums(is.na(test))
 ```
+We've got some to deal with. Let's get into a visual analysis to see if it's worth trying to estimate these missing values.
+
+### Visual
+To start, let's take a look at age and sex to see how those play into who lives.
+```{r}
+#Sex
+train %>% select(Survived, Sex) %>%
+  ggplot() + geom_bar(aes(x=Sex, fill = Survived))
+```
+It's clear to see that women survive at higher rates than men do.
+
+```{r}
+#Age
+train %>% select(Survived, Age) %>%
+  ggplot() + geom_histogram(aes(x=Age, fill = Survived))
+```
+
+Stopped here 5/29
+
+
 
 For age, we'll try out inputting the median age of 28, which is found below.
 ```{r}
