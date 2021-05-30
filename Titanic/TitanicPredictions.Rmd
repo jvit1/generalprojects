@@ -39,7 +39,7 @@ To start, let's take a look at age and sex to see how those play into who lives.
 ```{r}
 #Sex
 train %>% select(Survived, Sex) %>%
-  ggplot() + geom_bar(aes(x=Sex, fill = Survived))
+  ggplot(aes(x=Sex, fill = Survived)) + geom_bar(position='dodge')
 ```
 It's clear to see that women survive at higher rates than men do.
 
