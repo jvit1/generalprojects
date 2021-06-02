@@ -5,6 +5,7 @@ library(modelr)
 library(randomForest)
 library(ggplot2)
 library(knitr)
+library(gridExtra)
 train <- read.csv("C:/Users/student/Documents/UVA/Portfolio Projects/generalprojects/Titanic/train.csv")
 test <- read.csv("C:/Users/student/Documents/UVA/Portfolio Projects/generalprojects/Titanic/test.csv")
 ```
@@ -48,8 +49,35 @@ It's clear to see that women survive at higher rates than men do.
 train %>% select(Survived, Age) %>%
   ggplot() + geom_histogram(aes(x=Age, fill = Survived))
 ```
+Based just on the graphic, it's pretty tough to tell if Age is a predictor. We can try to take a look at economic status based on ticket prices.
 
-Stopped here 5/29
+```{r}
+#Ticket Price
+low.fare <- train %>% select(Survived, Fare) %>% filter(Fare < 100) %>%
+  ggplot() + geom_histogram(aes(x=Fare, fill = Survived)) +theme(legend.position = 'none')
+
+high.fare <-train %>% select(Survived, Fare) %>% filter(Fare > 100) %>%
+  ggplot() + geom_histogram(aes(x=Fare, fill = Survived))
+
+grid.arrange(low.fare, high.fare, ncol=2)
+```
+It's important to note the scales of each graph, but it's easy to see that low priced fares have lower survival rates. With that being said, let's look to see if where people embark from could make a difference.
+
+```{r}
+#Embark
+train %>% select(Survived, Embarked) %>% drop_na() %>%
+  ggplot(aes(x=Embarked, fill = Survived)) + geom_bar(position='dodge') 
+```
+Based on this graphic, it looks like a whole lot more people left from S. Just out of curiosity, let's look into some demographic information. Using both embarked and ticket price may end up overfitting the model, so this step may have some important results.
+
+```{r}
+# Want avg ticket price
+# Sex by location (Floating avg age)
+# Survived by location (floating avg age)
+train %>% select(Fare, Embarked)%>% 
+  group_by(Embarked) %>% 
+  drop_na() %>% summarise('Median Fare' = median(Fare))
+```
 
 
 
