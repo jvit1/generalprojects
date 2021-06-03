@@ -1,0 +1,15 @@
+Written by John*
+
+PassengerId- Unique identifier for each passenger.
+Pclass- Status level of ticket
+Sex- Sex of passenger
+Age- Age of passenger
+SibSp- Number of siblings or spouses onboard
+Parch- Number of parents or children onboard
+Ticket- Ticket identificaiton number/string
+Fare- Cost of ticket
+Cabin- Location onboard
+Embarked- Location of where passenger left from
+
+
+*(totally could be incorrect, but these were my interpretations)
