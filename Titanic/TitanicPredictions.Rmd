@@ -176,14 +176,38 @@ RF.add1 %>%
 ```
 Just as expected, random forest seems like the model to use. Let's do some more exploration and apply the final model to the testing data and submit. 
 
+Let's see which values we need to fill.
 ```{r}
-test %>% select(Age) %>% summarise(median=median(Age, na.rm=TRUE))
-test$Age[is.na(test$Age)] <- 27
-
-test %>% select(Fare) %>% summarise(median=median(Fare, na.rm=TRUE))
-test$Fare[is.na(test$Fare)] <- 14.4542
+colSums(is.na(test))
 ```
+Looks like we'll have to estimate some ages. Based on our EDA from above, we will input the median age depending on where the passenger embarked. This is done to get a slightly better median age which will aid our model more than using the median total age. The same will be done for the missing fare value.
 
+```{r}
+#Age
+test.ages <- test %>% select(Embarked, Age) %>% 
+  group_by(Embarked) %>% 
+  drop_na() %>% 
+  summarise("Median Age" = median(Age))
+
+C.age <- test.ages$`Median Age`[1]
+Q.age <- test.ages$`Median Age`[2]
+S.age <- test.ages$`Median Age`[3]
+
+
+test$Age <- ifelse(is.na(test$Age) & test$Embarked == 'C', C.age, test$Age)
+test$Age <- ifelse(is.na(test$Age) & test$Embarked == 'Q', Q.age, test$Age)
+test$Age <- ifelse(is.na(test$Age) & test$Embarked == 'S', S.age, test$Age)
+
+#Fare
+which(is.na(test$Fare))
+test[153,]  #Left from S, let's use that median
+
+test.fare <- test %>% filter(Embarked == 'S') %>% drop_na() %>% summarise("Median" = median(Fare))
+S.fare <- test.fare[1]
+
+test$Fare <- ifelse(is.na(test$Fare) & test$Embarked == 'S', C.age, test$Fare)
+```
+Boom. Problem solved. Let's apply this to the testing and submit.
 
 ```{r}
 RF.test <- test %>%
