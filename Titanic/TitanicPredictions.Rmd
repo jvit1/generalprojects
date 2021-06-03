@@ -6,6 +6,7 @@ library(randomForest)
 library(ggplot2)
 library(knitr)
 library(gridExtra)
+library(car)
 train <- read.csv("C:/Users/student/Documents/UVA/Portfolio Projects/generalprojects/Titanic/train.csv")
 test <- read.csv("C:/Users/student/Documents/UVA/Portfolio Projects/generalprojects/Titanic/test.csv")
 ```
@@ -71,26 +72,83 @@ train %>% select(Survived, Embarked) %>% drop_na() %>%
 Based on this graphic, it looks like a whole lot more people left from S. Just out of curiosity, let's look into some demographic information. Using both embarked and ticket price may end up overfitting the model, so this step may have some important results.
 
 ```{r}
-# Want avg ticket price
-# Sex by location (Floating avg age)
-# Survived by location (floating avg age)
 train %>% select(Fare, Embarked)%>% 
   group_by(Embarked) %>% 
-  drop_na() %>% summarise('Median Fare' = median(Fare))
+  drop_na() %>% summarise('Median Fare' = median(Fare)) 
 ```
+This pairs up with the graph above. More people survived than died when embarking from C, and C also has the highest median fare.
 
-
-
-For age, we'll try out inputting the median age of 28, which is found below.
 ```{r}
-train %>% select(Age) %>% summarise(median=median(Age, na.rm=TRUE))
-train$Age[is.na(train$Age)] <- 28
+train %>% select(Sex, Survived, Age) %>% drop_na() %>%
+  group_by(Survived, Sex) %>% summarise('Median Age' = median(Age))
+```
+Here's another interesting conclusion. The median survival age for females is lower compared to those that did not survive. This is the opposite in males. Let's break this down further into the ticket class (pclass).
+
+```{r}
+train %>% select(Sex, Survived, Age, Pclass) %>% drop_na() %>%
+  group_by(Survived, Pclass) %>% summarise('Median Age' = median(Age))
+```
+To no surprise, passengers in the highest ticket class had the highest median age. This could lead to the conclusion that age may not be a significant predictor of survived, and ticket class may be more effective. Let's begin building a simple logistic model to start.
+
+## Logistic Model
+Before we start, we have to take care of some of the missing values. Here's a reminder of what we are missing:
+```{r}
+colSums(is.na(train))
 ```
 
-Let's try running a random forest initially. We may need to predict age later on.
+For now, we'll try out inputting the median age of 28, which is found below.
+```{r}
+medianAge <- train %>% select(Age) %>% summarise(median=median(Age, na.rm=TRUE))
+train$Age[is.na(train$Age)] <- medianAge
+```
+
+Now we'll build a couple logistic models. 
+```{r}
+logistic.train <- train
+logistic.train$Age <- as.numeric(logistic.train$Age)
+
+#Changing male to 0 and female to 1
+logistic.train <- logistic.train %>% 
+  mutate(Sex = ifelse(Sex == 'male',0,1))
+
+
+logistic.train$Sex <- as.numeric(logistic.train$Sex)
+logistic.train$Parch <- as.numeric(logistic.train$Parch)
+logistic.train$SibSp <- as.numeric(logistic.train$SibSp)
+
+
+str(logistic.train)
+
+log.mod1 <- glm(Survived ~ Sex + Age + SibSp + Parch + Fare, family="binomial", data=logistic.train)
+summary(log.mod1)
+vif(log.mod1)
+```
+
+All in all, the logistic regression model using Sex, Age, SibSp, Parch, and Fare is not too bad. Let's apply these predictions to the data to see how we did.
+
+```{r}
+logistic.train1 <- logistic.train %>%
+  add_predictions(log.mod1, type = "response") %>%
+  mutate(pred = ifelse(pred >= .5, 1,0))
+```
+
+Checking confusion matrix and accuracy rate:
+```{r}
+logistic.train1$pred <- as.factor(logistic.train1$pred)
+
+logistic.train1 %>%
+  conf_mat(truth = Survived, estimate = pred)
+
+## Accuracy rate
+logistic.train1 %>%
+  metrics(truth = Survived, estimate = pred) %>%
+  filter(.metric == "accuracy")
+```
+Not the best model at all. Let's explore random forests using the same predictors to see if that will make a difference.
+
 ```{r}
 train.clean <- train %>% select(-Name, -PassengerId)
-RF.1 <- randomForest(Survived ~ . , data = train.clean,
+RF.1 <- randomForest(Survived ~ Sex + Age + SibSp + Parch + Fare , data = train.clean,
                      mtry = 2, importance= TRUE)
 
 RF.1 %>% importance
@@ -100,25 +158,24 @@ Now we'll go head and add these to the data then assess the accuracy.
 ```{r}
 #Adding to data
 RF.add1 <- train.clean %>%
-  add_predictions(RF.1) %>%
-  rename(pred_pct = pred) %>%
-  mutate(method = "RF.1") %>%
-  mutate(prediction = ifelse(pred_pct > .5, 1,0))
+  add_predictions(RF.1, type = "response") %>%
+  mutate(pred = ifelse(pred >= .5, 1,0))
+
 
 RF.add1$Survived <- as.factor(RF.add1$Survived)
-RF.add1$prediction <- as.factor(RF.add1$prediction)
+RF.add1$pred <- as.factor(RF.add1$pred)
 
 
 #Assessments
 RF.add1 %>%
-  conf_mat(truth = Survived, estimate = prediction)
+  conf_mat(truth = Survived, estimate = pred)
 
 RF.add1 %>%
-  metrics(truth = Survived, estimate = prediction) %>%
+  metrics(truth = Survived, estimate = pred) %>%
   filter(.metric == "accuracy")
 ```
+Just as expected, random forest seems like the model to use. Let's do some more exploration and apply the final model to the testing data and submit. 
 
-Not bad. Let's apply this to the testing data. First, we have to fill the missing values.
 ```{r}
 test %>% select(Age) %>% summarise(median=median(Age, na.rm=TRUE))
 test$Age[is.na(test$Age)] <- 27
