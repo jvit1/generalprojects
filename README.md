@@ -7,3 +7,4 @@ I'd recommend viewing the PDF's in the respository (if avaliable) to easily see 
 
 ### Descriptions of projects:
 1) *Titanic* - The traditional predictive analytics project. Do passengers survive or die? Data were found on Kaggle and entered into the ongoing competition for scoring.
+	Topics: Exploratory Data Analysis (dplyr), Data Visualization (GGplot), Logistic Regression, Random Forests
