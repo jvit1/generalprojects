@@ -1,3 +1,14 @@
+---
+title: "Titanic Predictions"
+author: "John Vithoulkas"
+output:
+  pdf_document: default
+  html_document: default
+  '': default
+header-includes:
+  - \usepackage {hyperref}
+  - \hypersetup {colorlinks=true, linkcolor=blue, urlcolor=blue}
+---
 ```{r warning=FALSE, include=FALSE}
 library(tidyverse)
 library(tidymodels)
@@ -11,6 +22,20 @@ train <- read.csv("C:/Users/student/Documents/UVA/Portfolio Projects/generalproj
 test <- read.csv("C:/Users/student/Documents/UVA/Portfolio Projects/generalprojects/Titanic/test.csv")
 ```
 
+The following project was inspired by Kaggle's Machine Learning competition. The competition can be viewed [here](https://www.kaggle.com/c/titanic). 
+
+I certify on my honor that this is my own, original work.
+\newline
+
+Topics Covered:
+
+* Exploratory Data Analysis
+* Visualizations using GGplot
+* Logistic Regression
+* Random Forests
+
+\newpage
+
 ## Exploratory
 Let's take a look into the data.
 ```{r}
@@ -22,8 +47,8 @@ train$Sex <- as.factor(train$Sex)
 train$Survived <- as.factor(train$Survived)
 train$Pclass <- as.factor(train$Pclass)
 train$Embarked <- as.factor(train$Embarked)
-train$SibSp <- as.factor(train$SibSp)
-train$Parch <- as.factor(train$Parch)
+train$SibSp <- as.numeric(train$SibSp)
+train$Parch <- as.numeric(train$Parch)
 
 
 train$Embarked[train$Embarked==""]<-"Any text, NA will be generated"
@@ -55,7 +80,8 @@ Based just on the graphic, it's pretty tough to tell if Age is a predictor. We c
 ```{r}
 #Ticket Price
 low.fare <- train %>% select(Survived, Fare) %>% filter(Fare < 100) %>%
-  ggplot() + geom_histogram(aes(x=Fare, fill = Survived)) +theme(legend.position = 'none')
+  ggplot() + geom_histogram(aes(x=Fare, fill = Survived)) +
+  theme(legend.position = 'none')
 
 high.fare <-train %>% select(Survived, Fare) %>% filter(Fare > 100) %>%
   ggplot() + geom_histogram(aes(x=Fare, fill = Survived))
@@ -112,14 +138,15 @@ logistic.train <- logistic.train %>%
   mutate(Sex = ifelse(Sex == 'male',0,1))
 
 
-logistic.train$Sex <- as.numeric(logistic.train$Sex)
+logistic.train$Sex <- as.factor(logistic.train$Sex)
 logistic.train$Parch <- as.numeric(logistic.train$Parch)
 logistic.train$SibSp <- as.numeric(logistic.train$SibSp)
 
 
 str(logistic.train)
 
-log.mod1 <- glm(Survived ~ Sex + Age + SibSp + Parch + Fare, family="binomial", data=logistic.train)
+log.mod1 <- glm(Survived ~ Sex + Age + SibSp + Parch + Fare, family="binomial",
+                data=logistic.train)
 summary(log.mod1)
 vif(log.mod1)
 ```
@@ -148,8 +175,9 @@ Not the best model at all. Let's explore random forests using the same predictor
 
 ```{r}
 train.clean <- train %>% select(-Name, -PassengerId)
-RF.1 <- randomForest(Survived ~ Sex + Age + SibSp + Parch + Fare , data = train.clean,
-                     mtry = 2, importance= TRUE)
+train.clean$Age <- as.numeric(train.clean$Age)
+RF.1 <- randomForest(Survived ~ Sex + Age + SibSp + Parch + Fare , 
+                     data = train.clean, mtry = 2, importance= TRUE)
 
 RF.1 %>% importance
 ```
@@ -158,8 +186,7 @@ Now we'll go head and add these to the data then assess the accuracy.
 ```{r}
 #Adding to data
 RF.add1 <- train.clean %>%
-  add_predictions(RF.1, type = "response") %>%
-  mutate(pred = ifelse(pred >= .5, 1,0))
+  add_predictions(RF.1, type = "response")
 
 
 RF.add1$Survived <- as.factor(RF.add1$Survived)
@@ -202,7 +229,8 @@ test$Age <- ifelse(is.na(test$Age) & test$Embarked == 'S', S.age, test$Age)
 which(is.na(test$Fare))
 test[153,]  #Left from S, let's use that median
 
-test.fare <- test %>% filter(Embarked == 'S') %>% drop_na() %>% summarise("Median" = median(Fare))
+test.fare <- test %>% filter(Embarked == 'S') %>% drop_na() %>% 
+  summarise("Median" = median(Fare))
 S.fare <- test.fare[1]
 
 test$Fare <- ifelse(is.na(test$Fare) & test$Embarked == 'S', C.age, test$Fare)
@@ -210,15 +238,23 @@ test$Fare <- ifelse(is.na(test$Fare) & test$Embarked == 'S', C.age, test$Fare)
 Boom. Problem solved. Let's apply this to the testing and submit.
 
 ```{r}
+test$Sex <- as.factor(test$Sex)
+test$Age <- as.numeric(test$Age)
+test$SibSp <- as.numeric(test$SibSp)
+test$Parch <- as.numeric(test$Parch)
+test$Fare <- as.numeric(test$Fare)
+
+
 RF.test <- test %>%
-  add_predictions(RF.1) %>%
-  rename(pred_pct = pred) %>%
-  mutate(method = "RF.1") %>%
-  mutate(prediction = ifelse(pred_pct > .5, 1,0))
+  add_predictions(RF.1)
+
+
+
+#  mutate(prediction = ifelse(pred_pct > .5, 1,0))
 
 final.results <- RF.test %>%
-  select(PassengerId, prediction) %>%
-  rename(Survived = prediction)
+  select(PassengerId, pred) %>%
+  rename(Survived = pred)
 
 write.csv(final.results, 'C:/Users/student/Documents/UVA/Portfolio Projects/generalprojects/Titanic/results.csv' , row.names=FALSE)
 ```
