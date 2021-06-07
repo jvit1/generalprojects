@@ -1,0 +1,16 @@
+https://www.udemy.com/course/numpy-python/
+
+Topics covered:
+-Numpy
+-Basic operations in Numpy
+-Scipy
+-Pandas
+-Matplotlib
+-Vector, Matrix, and Tensor manipulation.
+-Visualizing data
+-Reading, writing, and manipulating DataFrames
+
+I am took this course to expand on my Python knowledge from data standpoint.
+Before this course, I was not confident in my data manipulation abilities in Python, as I originally learned R.
+
+This folder hosts notes and code, and serves mainly as a proof of completion.
