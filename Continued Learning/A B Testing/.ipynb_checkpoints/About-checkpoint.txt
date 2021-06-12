@@ -1,0 +1,24 @@
+https://www.udemy.com/course/bayesian-machine-learning-in-python-ab-testing/
+
+Course Description:
+This course is all about A/B testing.
+A/B testing is used everywhere. Marketing, retail, newsfeeds, online advertising, and more.
+A/B testing is all about comparing things.
+If you’re a data scientist, and you want to tell the rest of the company, “logo A is better than logo B”, well you can’t just say that without proving it using numbers and statistics.
+Traditional A/B testing has been around for a long time, and it’s full of approximations and confusing definitions.
+In this course, while we will do traditional A/B testing in order to appreciate its complexity, what we will eventually get to is the Bayesian machine learning way of doing things.
+
+First, we’ll see if we can improve on traditional A/B testing with adaptive methods. These all help you solve the explore-exploit dilemma.
+You’ll learn about the epsilon-greedy algorithm, which you may have heard about in the context of reinforcement learning.
+We’ll improve upon the epsilon-greedy algorithm with a similar algorithm called UCB1.
+Finally, we’ll improve on both of those by using a fully Bayesian approach.
+
+Why is the Bayesian method interesting to us in machine learning?
+It’s an entirely different way of thinking about probability.
+It’s a paradigm shift.
+You’ll probably need to come back to this course several times before it fully sinks in.
+It’s also powerful, and many machine learning experts often make statements about how they “subscribe to the Bayesian school of thought”.
+In sum - it’s going to give us a lot of powerful new tools that we can use in machine learning.
+The things you’ll learn in this course are not only applicable to A/B testing, but rather, we’re using A/B testing as a concrete example of how Bayesian techniques can be applied.
+
+You’ll learn these fundamental tools of the Bayesian method - through the example of A/B testing - and then you’ll be able to carry those Bayesian techniques to more advanced machine learning models in the future.
