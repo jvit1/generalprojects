@@ -31,3 +31,9 @@ join sales on sales.product_id = menu.product_id
 group by product_name;
 
 -- 5. Which item was the most popular for each customer?
+select 
+	sales.customer_id,
+    max(menu.product_name)
+from sales
+join menu on sales.product_id = menu.product_id
+group by customer_id;
