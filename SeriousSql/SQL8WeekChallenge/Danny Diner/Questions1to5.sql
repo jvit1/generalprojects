@@ -9,7 +9,7 @@ group by customer_id;
 -- 2. How many days has each customer visited the restaurant?
 select
 	customer_id,
-    count(customer_id) as Visits
+    count(distinct order_date) as total
 from sales
 group by customer_id;
 
@@ -23,17 +23,23 @@ join menu on sales.product_id = menu.product_id
 group by customer_id;
 
 -- 4. What is the most purchased item on the menu and how many times was it purchased by all customers?
-select
-	menu.product_name,
-    count(sales.order_date) as total
-from menu
-join sales on sales.product_id = menu.product_id
-group by product_name;
-
--- 5. Which item was the most popular for each customer?
+with table_quatro as
+(
 select 
 	sales.customer_id,
-    max(menu.product_name)
+    sales.order_date,
+    sales.product_id,
+    menu.price,
+    menu.product_name
 from sales
-join menu on sales.product_id = menu.product_id
-group by customer_id;
+inner join menu
+on sales.product_id = menu.product_id
+)
+
+select count(*) as total, product_name
+from table_quatro
+group by product_name
+order by total desc
+limit 1;
+
+-- 5. Which item was the most popular for each customer?
