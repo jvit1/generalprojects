@@ -12,7 +12,7 @@ print(txn)
 inspect(head(txn,5))
 
 #Most Frequently Purchased Items
-itemFrequencyPlot(txn, topN=10, type='absolute')
+itemFrequencyPlot(txn, topN=10, type='absolute', ylab="Count")
 itemFrequencyPlot(txn, topN=10, type='relative')
 
 #Frequency of having a milk product in the basket
